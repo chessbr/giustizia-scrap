@@ -19,14 +19,14 @@ from bs4 import BeautifulSoup
 
 inscrito_ruolo_re = re.compile("\<li\>iscritto al ruolo il (.+)\<\/li\>")
 
-INITIAL_ID = 42000
-FINAL_ID = 42001
+INITIAL_ID = 46626
+FINAL_ID = 52000
 YEAR = 2018
 
 payload = dict(
     version="1.1.13",
     platform="iOS 12.0",
-    uuid="UUID",
+    uuid="DEVICE UUID",
     devicename="iPhone6,2",
     devicewidth=320,
     deviceheight=568,
@@ -47,6 +47,8 @@ if os.path.exists("cidadanias.txt"):
     processos = cidadanias.read().split("\n")
 
 for process_id in processos:
+    process_id = str(process_id)
+
     payload.update(dict(
         numproc=process_id,
         _=int(datetime.now().timestamp())       # este parâmetro é o tipespam, tem que ser diferente para cada request
