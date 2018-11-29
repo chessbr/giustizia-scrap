@@ -16,7 +16,7 @@ def load_ids_from_json(filename):
 
         if not sets.get(o['case_yr']):
             sets[o['case_yr']] = set()
-            sets[o['case_yr']].add(o['case_no'])
+        sets[o['case_yr']].add(o['case_no'])
 
     for year in sets:
         out[year] = list(sets[year])
