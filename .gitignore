@@ -2,3 +2,6 @@
 .idea
 /env
 /secrets.py
+/json_results.txt
+/csv_results.csv
+/cidadanias.txt
