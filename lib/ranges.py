@@ -4,6 +4,7 @@ import json
 def load_ids_from_json(filename):
     f = open(filename)
     json_objs = f.read().split("\n")
+    f.close()
 
     sets = {}
     out = {}

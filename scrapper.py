@@ -13,36 +13,40 @@ import os
 import time
 import json
 from lib.giustizia import get_case_details
+from lib.ranges import load_ids_from_json
 from progress.bar import Bar
 
-INITIAL_ID = 40000
-FINAL_ID = 50000
-YEAR = 2018
+INITIAL_ID = 0
+FINAL_ID = 60000
+RANGE_YEAR = 2018
 
 json_results = open("json_results.txt", "w+")
 csv_results = open("csv_results.csv", "w+")
 
-query_range = range(INITIAL_ID, FINAL_ID, 1)
+query_range = {RANGE_YEAR: range(INITIAL_ID, FINAL_ID, 1)}
 
-if os.path.exists("cidadanias.txt"):
-    cidadanias = open("cidadanias.txt")
-    query_range = cidadanias.read().split("\n")
+if os.path.exists("json_results.txt"):
+    loaded_json = load_ids_from_json("json_results.txt")
+    query_range = loaded_json if loaded_json else query_range
 
-for process_id in Bar(
-        'Querying', suffix='%(percent).1f%% - %(eta)ds'
-).iter(query_range):
-    case = get_case_details(YEAR, process_id)
+for year in query_range:
+    print("Querying cases from year {}".format(year))
 
-    if case:
-        print(" - \t{}".format(case))
-        json_results.write(json.dumps(case.asdict()))
-        csv_results.write(str(case))
-        json_results.write("\n")
-        csv_results.write("\n")
-        json_results.flush()
-        csv_results.flush()
+    for process_id in Bar(
+            'Querying', suffix='%(percent).1f%% - %(eta)ds'
+    ).iter(query_range[year]):
+        case = get_case_details(year, process_id)
 
-    time.sleep(5)  # previne se bloqueado por DOS
+        if case:
+            print(" - {}".format(case))
+            json_results.write(json.dumps(case.asdict()))
+            csv_results.write(str(case))
+            json_results.write("\n")
+            csv_results.write("\n")
+            json_results.flush()
+            csv_results.flush()
 
+        time.sleep(5)  # previne se bloqueado por DOS
+#
 json_results.close()
 csv_results.close()
