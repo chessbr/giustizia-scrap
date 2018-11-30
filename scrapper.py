@@ -9,25 +9,27 @@ e capturar estas informações através de um MITM, eu usei o https://mitmproxy.
 Atenção! Não faça muitas requisições em pouco tempo, isso vai bloquear o seu UUID/token e IP.
 Além disso, não seria bom perder este acesso por uso maldoso. Faça um bom uso.
 """
+import json
 import os
 import time
-import json
+
+from progress.bar import Bar
+
 from lib.giustizia import get_case_details
 from lib.ranges import load_ids_from_json
-from progress.bar import Bar
 
 INITIAL_ID = 0
 FINAL_ID = 60000
 RANGE_YEAR = 2018
-
-json_results = open("json_results.txt", "w+")
-csv_results = open("csv_results.csv", "w+")
 
 query_range = {RANGE_YEAR: range(INITIAL_ID, FINAL_ID, 1)}
 
 if os.path.exists("json_results.txt"):
     loaded_json = load_ids_from_json("json_results.txt")
     query_range = loaded_json if loaded_json else query_range
+
+json_results = open("json_results.txt", "w+")
+csv_results = open("csv_results.csv", "w+")
 
 for year in query_range:
     print("Querying cases from year {}".format(year))
