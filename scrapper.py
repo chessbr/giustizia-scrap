@@ -9,75 +9,46 @@ e capturar estas informações através de um MITM, eu usei o https://mitmproxy.
 Atenção! Não faça muitas requisições em pouco tempo, isso vai bloquear o seu UUID/token e IP.
 Além disso, não seria bom perder este acesso por uso maldoso. Faça um bom uso.
 """
+import json
 import os
-import re
 import time
-from datetime import datetime
 
-import requests
-from bs4 import BeautifulSoup
+from progress.bar import Bar
 
-inscrito_ruolo_re = re.compile("\<li\>iscritto al ruolo il (.+)\<\/li\>")
+from lib.giustizia import get_case_details
+from lib.ranges import load_ids_from_json
 
-INITIAL_ID = 46626
-FINAL_ID = 52000
-YEAR = 2018
+INITIAL_ID = 0
+FINAL_ID = 60000
+RANGE_YEAR = 2018
 
-payload = dict(
-    version="1.1.13",
-    platform="iOS 12.0",
-    uuid="DEVICE UUID",
-    devicename="iPhone6,2",
-    devicewidth=320,
-    deviceheight=568,
-    token="TOKEN",
-    azione="direttarg_sicid_mobile",
-    registro="CC",
-    idufficio="0580910098",
-    aaproc=YEAR,
-    tipoufficio=1
-)
+query_range = {RANGE_YEAR: range(INITIAL_ID, FINAL_ID, 1)}
 
-resultados = open("resultados.txt", "w+")
+if os.path.exists("json_results.txt"):
+    loaded_json = load_ids_from_json("json_results.txt")
+    query_range = loaded_json if loaded_json else query_range
 
-processos = range(INITIAL_ID, FINAL_ID, 1)
+json_results = open("json_results.txt", "w+")
+csv_results = open("csv_results.csv", "w+")
 
-if os.path.exists("cidadanias.txt"):
-    cidadanias = open("cidadanias.txt")
-    processos = cidadanias.read().split("\n")
+for year in query_range:
+    print("Querying cases from year {}".format(year))
 
-for process_id in processos:
-    process_id = str(process_id)
+    for process_id in Bar(
+            'Querying', suffix='%(percent).1f%% - %(eta)ds'
+    ).iter(query_range[year]):
+        case = get_case_details(year, process_id)
 
-    payload.update(dict(
-        numproc=process_id,
-        _=int(datetime.now().timestamp())       # este parâmetro é o tipespam, tem que ser diferente para cada request
-    ))
-    response = requests.get("https://mob1.processotelematico.giustizia.it/proxy/index_mobile.php", params=payload)
-    content = response.text
+        if case:
+            print(" - {}".format(case))
+            json_results.write(json.dumps(case.asdict()))
+            csv_results.write(str(case))
+            json_results.write("\n")
+            csv_results.write("\n")
+            json_results.flush()
+            csv_results.flush()
 
-    print ("Buscando %s" % process_id)
-    if "cittadinanza" in content:
-
-        bs = BeautifulSoup(content)
-        nome_giudice = bs.find("nomegiudice")
-        data_udienza = bs.find("dataudienza")
-
-        inscrito_ruolo_search = inscrito_ruolo_re.search(content)
-        if inscrito_ruolo_search:
-            data_inscricao = inscrito_ruolo_search.groups()[0]
-        else:
-            data_inscricao = "???"
-
-        nome_giudice = nome_giudice.string if nome_giudice else "SEM JUIZ"
-        data_udienza = data_udienza.string if data_udienza else "SEM DATA AUDIENCIA"
-
-        row = ";".join([process_id, data_inscricao, nome_giudice, data_udienza])
-        print(row)
-        resultados.write(row)
-        resultados.write("\n")
-        resultados.flush()
-
-    time.sleep(5)   # previne se bloqueado por DOS
-
-resultados.close()
+        time.sleep(5)  # previne se bloqueado por DOS
+#
+json_results.close()
+csv_results.close()
