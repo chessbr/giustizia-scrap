@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import re
 from datetime import datetime
+
+import requests
+from bs4 import BeautifulSoup
+
 from secrets import (
     deviceheight, devicename, devicewidth, os_version, token,
     user_agent, uuid
 )
-
-import requests
-from bs4 import BeautifulSoup
 
 query_url = "https://mob1.processotelematico.giustizia.it/proxy/index_mobile.php"
 base_payload = dict(
@@ -32,7 +33,8 @@ remove_lawyer_prefix = re.compile("(?<=Avv. ).*")
 
 
 class Case:
-    def __init__(self, case_yr, case_no, date_filed, judge_name, date_hearing, case_state, primary_lawyer_initials):
+    def __init__(self, case_yr, case_no, date_filed, judge_name, date_hearing, case_state, primary_lawyer_initials,
+                 raw_case_content=None):
         self.year = case_yr
         self.number = case_no
         self.date_filed = date_filed
@@ -40,6 +42,7 @@ class Case:
         self.judge_name = judge_name
         self.case_state = case_state
         self.primary_lawyer_initials = primary_lawyer_initials
+        self.raw_case_content = raw_case_content
 
     def __str__(self):
         return ";".join([
@@ -60,6 +63,7 @@ class Case:
             'judge_name': self.judge_name,
             'case_state': self.case_state,
             'primary_lawyer_initials': self.primary_lawyer_initials,
+            'raw_case_content': self.raw_case_content
         }
 
 
@@ -104,7 +108,8 @@ def get_case_details(case_yr, case_no):
             nome_giudice,
             data_udienza,
             case_state,
-            primary_lawyer_initials
+            primary_lawyer_initials,
+            raw_case_content=content
         )
 
 
