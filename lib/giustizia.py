@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 import re
 from datetime import datetime
+from secrets import (
+    deviceheight, devicename, devicewidth, os_version, token,
+    user_agent, uuid
+)
 
 import requests
 from bs4 import BeautifulSoup
 
-from secrets import uuid, devicename, deviceheight, devicewidth, token
-
 query_url = "https://mob1.processotelematico.giustizia.it/proxy/index_mobile.php"
 base_payload = dict(
     version="1.1.13",
-    platform="iOS 12.1",
+    platform=os_version,
     uuid=uuid,
     devicename=devicename,
     devicewidth=devicewidth,
@@ -21,6 +23,9 @@ base_payload = dict(
     idufficio="0580910098",
     tipoufficio=1
 )
+headers = {
+    'User-Agent': user_agent
+}
 
 inscrito_ruolo_re = re.compile("\<li\>iscritto al ruolo il (.+)\<\/li\>")
 remove_lawyer_prefix = re.compile("(?<=Avv. ).*")
@@ -64,14 +69,17 @@ def get_case_details(case_yr, case_no):
     payload.update(dict(
         aaproc=str(case_yr),
         numproc=str(case_no),
-        _=int(datetime.now().timestamp())  # este parâmetro é o tipespam, tem que ser diferente para cada request
+        _=int(datetime.now().timestamp())
     ))
 
-    response = requests.get(query_url, params=payload)
+    response = requests.get(query_url, params=payload, headers=headers)
     content = response.text
 
-    if "cittadinanza" in content:
+    if "Errore tecnico" in content:
+        print("Request failed", content.text)
+        raise Exception()
 
+    if "cittadinanza" in content:
         bs = BeautifulSoup(content)
         nome_giudice = bs.find("nomegiudice")
         data_udienza = bs.find("dataudienza")

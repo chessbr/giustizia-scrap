@@ -34,9 +34,7 @@ csv_results = open("csv_results.csv", "w+")
 for year in query_range:
     print("Querying cases from year {}".format(year))
 
-    for process_id in Bar(
-            'Querying', suffix='%(percent).1f%% - %(eta)ds'
-    ).iter(query_range[year]):
+    for process_id in Bar('Querying', suffix='%(percent).1f%% - %(eta)ds').iter(query_range[year]):
         case = get_case_details(year, process_id)
 
         if case:
@@ -48,7 +46,7 @@ for year in query_range:
             json_results.flush()
             csv_results.flush()
 
-        time.sleep(5)  # previne se bloqueado por DOS
-#
+        time.sleep(0.1)  # wait a little to prevent DOS
+
 json_results.close()
 csv_results.close()
