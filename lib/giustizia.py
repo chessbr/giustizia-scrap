@@ -53,7 +53,7 @@ class Case:
             self.date_hearing,
             self.case_state,
             self.primary_lawyer_initials,
-            self.judgement_number,
+            self.judgement_number if self.judgement_number else "",
         ])
 
     def asdict(self):
