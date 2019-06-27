@@ -18,23 +18,21 @@ from progress.bar import Bar
 from lib.giustizia import get_case_details
 from lib.ranges import load_ids_from_json
 
-READ_ONLY = True
-RANGE_ONLY = True
+SCAN_MODE = False
 RATE_LIMIT = 0.1
 
-INITIAL_ID = 0
-FINAL_ID = 60000
-RANGE_YEAR = 2018
+INITIAL_ID = 25001
+FINAL_ID = 30000
+RANGE_YEAR = 2019
 
 query_range = {RANGE_YEAR: range(INITIAL_ID, FINAL_ID, 1)}
 
-if os.path.exists("json_results.txt") and not RANGE_ONLY:
+if os.path.exists("json_results.txt") and not SCAN_MODE:
     loaded_json = load_ids_from_json("json_results.txt")
     query_range = loaded_json if loaded_json else query_range
 
-if not READ_ONLY:
-    json_results = open("json_results.txt", "w+")
-    csv_results = open("csv_results.csv", "w+")
+json_results = open("json_results.txt", "w+")
+csv_results = open("csv_results.csv", "w+")
 
 for year in query_range:
     print("Querying cases from year {}".format(year))
@@ -44,16 +42,16 @@ for year in query_range:
 
         if case:
             print(" - {}".format(case))
-            if not READ_ONLY:
-                json_results.write(json.dumps(case.asdict()))
-                csv_results.write(str(case))
-                json_results.write("\n")
-                csv_results.write("\n")
-                json_results.flush()
-                csv_results.flush()
+            json_results.write(json.dumps(case.asdict()))
+            csv_results.write(str(case))
+            json_results.write("\n")
+            csv_results.write("\n")
+            json_results.flush()
+            csv_results.flush()
+        else:
+            print(process_id, "errored")
 
         time.sleep(RATE_LIMIT)  # wait a little to prevent DOS
 
-if not READ_ONLY:
-    json_results.close()
-    csv_results.close()
+json_results.close()
+csv_results.close()
